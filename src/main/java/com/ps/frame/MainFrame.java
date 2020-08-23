@@ -2,7 +2,7 @@ package com.ps.frame;
 
 import com.ps.constants.PropertiesDef;
 import com.ps.panel.OperatorJPanel;
-import com.ps.panel.ViewOperatorLogJpanel;
+import com.ps.panel.ViewOperatorLogJPanel;
 import com.ps.utils.ServerUtils;
 
 import javax.swing.*;
@@ -12,7 +12,7 @@ public class MainFrame  extends JFrame {
 
     private Container container ;
     private OperatorJPanel operatorJpanel;
-    private ViewOperatorLogJpanel viewOperatorLogJpanel;
+    private ViewOperatorLogJPanel viewOperatorLogJpanel;
 
     //创建窗体ViewOperatorLog
     public MainFrame() {
@@ -34,7 +34,7 @@ public class MainFrame  extends JFrame {
 
 
         //日志区域
-        this.viewOperatorLogJpanel = new ViewOperatorLogJpanel();
+        this.viewOperatorLogJpanel = new ViewOperatorLogJPanel();
         container.add(this.viewOperatorLogJpanel, BorderLayout.SOUTH);
 
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); //关闭

@@ -110,15 +110,54 @@ public class OperatorJPanel {
 
         @Override
         public void actionPerformed(ActionEvent event) {
-            System.out.println("1111111111111111111111111");
-            if (event.getSource() == PropertiesDef.InstallButtonName) {       //安装服务
-                new TimeDialog().showDialog(mainFrame,"确认安装",10);
-            } else if (event.getSource() == PropertiesDef.StartButtonName) { //启动服务
-                new TimeDialog().showDialog(mainFrame,"确认启动服务",10);
-            } else if (event.getSource() == PropertiesDef.StopButtonName) { //停止服务
-                new TimeDialog().showDialog(mainFrame,"确认停止服务",10);
-            } else if (event.getSource() == PropertiesDef.RestartButtonName) { //重启服务
-                new TimeDialog().showDialog(mainFrame,"确认重启服务",10);
+
+            if (event.getActionCommand() == PropertiesDef.InstallButtonName) {       //安装服务
+                installJbutton.setEnabled(false);
+                int result = new TimeDialog().showDialog(mainFrame,"确认安装",10);
+                if (result==PropertiesDef.TimeDialogNo){
+                    installJbutton.setEnabled(true);
+                } else { //安装应用操作
+                    //TODO 安装服务
+
+                    //安装成功后，可执行安钮允许操作
+                    runJbutton.setEnabled(true);
+                }
+            } else if (event.getActionCommand() == PropertiesDef.StartButtonName) { //启动服务
+                runJbutton.setEnabled(false);
+                int result = new TimeDialog().showDialog(mainFrame,"确认启动服务",10);
+                if (result==PropertiesDef.TimeDialogNo){
+                    runJbutton.setEnabled(true);
+                } else { //启动服务
+                    // TODO 启动服务
+
+                    //服务启动成功后，设置允许进行服务停止和重启操作
+                    stopJbutton.setEnabled(true);
+                    restartJbutton.setEnabled(true);
+                }
+            } else if (event.getActionCommand() == PropertiesDef.StopButtonName) { //停止服务
+                stopJbutton.setEnabled(false);
+                int result = new TimeDialog().showDialog(mainFrame,"确认停止服务",10);
+                if (result==PropertiesDef.TimeDialogNo){
+                    stopJbutton.setEnabled(true);
+                } else { //停止服务
+                    //TODO 停止服务
+
+                    runJbutton.setEnabled(true);   //服务停止后，允许启动
+                    restartJbutton.setEnabled(false); //服务停止后，不允许重启
+                }
+            } else if (event.getActionCommand() == PropertiesDef.RestartButtonName) { //重启服务
+                restartJbutton.setEnabled(false);
+                int result = new TimeDialog().showDialog(mainFrame,"确认重启服务",10);
+                if (result==PropertiesDef.TimeDialogNo){
+                    restartJbutton.setEnabled(true);
+                    stopJbutton.setEnabled(true);
+                } else {
+                    //TODO 重启服务
+
+                    //设置允许重启操作
+                    stopJbutton.setEnabled(true);
+                    restartJbutton.setEnabled(true);
+                }
             }
         }
 

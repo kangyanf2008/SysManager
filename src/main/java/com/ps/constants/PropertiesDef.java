@@ -8,8 +8,8 @@ public class PropertiesDef {
      * 安装工具栏
      */
     public static final String InstallLabelName = "  安装状态： ";
-    public static final String NotInstallStatus = "    未安装    ";
-    public static final String InstallStatus = "    已安装    ";
+    public static final String NotInstallStatus = "  未安装  ";
+    public static final String InstallStatus = "  已安装  ";
     public static final String InstallButtonName = "安装";
 
     /**
@@ -30,4 +30,9 @@ public class PropertiesDef {
     public static final String DockerProcessName = "Docker.exe"; //进程名
     public static final String DockerImageName = "owlook*";      //docker镜像名
 
+    public static final int LogViewRows = 300;
+    public static final int LogViewColumns = 150;
+
+    public static final int TimeDialogYes = 0;    //确认
+    public static final int TimeDialogNo = 1;     //取消
 }
