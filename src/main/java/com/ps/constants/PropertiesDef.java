@@ -5,7 +5,7 @@ public class PropertiesDef {
     public static final String MainFrameTitle = "系统管理 v1.0.0";
 
     /**
-     * 安装工具栏
+     * 安装区域
      */
     public static final String InstallLabelName = "  安装状态： ";
     public static final String NotInstallStatus = "  未安装  ";
@@ -13,7 +13,7 @@ public class PropertiesDef {
     public static final String InstallButtonName = "安装";
 
     /**
-     * 运行工具栏
+     * 运行区域
      */
     public static final String RunLabelName = "  运行状态： ";
     public static final String NotRunStatus = "  未运行  ";
@@ -26,9 +26,13 @@ public class PropertiesDef {
     public static final int MainFrameWith = 500;
     public static final int MainFrameHigh = 400;
 
+    //运行配置参数
     public static final String DockerServiceName = "Docker*"; //服务名
-    public static final String DockerProcessName = "Docker.exe"; //进程名
-    public static final String DockerImageName = "owlook*";      //docker镜像名
+    public static final String DockerProcessName = "\"Docker Desktop\""; //进程名
+    //public static final String DockerImageName = "owlook*";      //docker镜像名
+    public static final String DockerImageName = "";      //docker镜像名
+    public static final String DockerProgramName = "DockerDesktopInstaller.exe";           //安装程序名
+    public static final String ProgramHomeKey = "PROGRAM_HOME";           //程序运行根目录
 
     public static final int LogViewRows = 300;
     public static final int LogViewColumns = 150;

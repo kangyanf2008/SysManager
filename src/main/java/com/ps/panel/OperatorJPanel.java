@@ -1,12 +1,16 @@
 package com.ps.panel;
 
 import com.ps.constants.PropertiesDef;
+import com.ps.env.Env;
 import com.ps.frame.MainFrame;
+import com.ps.utils.ServerUtils;
+import sun.rmi.runtime.NewThreadAction;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.TimeUnit;
 
 public class OperatorJPanel {
 
@@ -16,7 +20,7 @@ public class OperatorJPanel {
     private JLabel installLable;     //安装标签
     private JLabel installStatus;     //安装状态
     private JButton installJbutton;     //安装按钮
-    private boolean isInstall;             //服务是否安装
+    private volatile boolean isInstall;             //服务是否安装
 
     //运行工具栏
     private JPanel runJPanel;
@@ -25,7 +29,7 @@ public class OperatorJPanel {
     private JButton runJbutton;     //安装按钮
     private JButton stopJbutton;     //安装按钮
     private JButton restartJbutton;     //安装按钮
-    private boolean isRun;                 //服务是否正常启动
+    private volatile boolean isRun;                 //服务是否正常启动
 
     public OperatorJPanel(boolean isInstall, boolean isRun, MainFrame mainFrame) {
         this.isRun = isRun;
@@ -41,18 +45,19 @@ public class OperatorJPanel {
         this.installLable.setText(PropertiesDef.InstallLabelName); //标题
 
         //判断是否已经安装，如果为true，则禁止重新安装
-        this.installStatus = new JLabel();   //安装状态
-        if (this.isInstall) {
-            this.installStatus.setText(PropertiesDef.InstallStatus); //安装状态
-            //this.installStatus.setCaretColor(Color.blue);
-        } else {
-            this.installStatus.setText(PropertiesDef.NotInstallStatus); //未安装
-            //this.installStatus.setCaretColor(Color.red);
-        }
-
         //安装按钮
         this.installJbutton = new JButton(PropertiesDef.InstallButtonName);
         this.installJbutton.addActionListener(monitor);
+        this.installStatus = new JLabel();   //安装状态
+        if (this.isInstall) {
+            this.installJbutton.setEnabled(true);
+            this.installStatus.setText(PropertiesDef.InstallStatus); //安装状态
+            //this.installStatus.setCaretColor(Color.blue);
+        } else {
+            this.installJbutton.setEnabled(false);
+            this.installStatus.setText(PropertiesDef.NotInstallStatus); //未安装
+            //this.installStatus.setCaretColor(Color.red);
+        }
 
         this.installJPanel = new JPanel(); //安装panel
         this.installJPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -78,8 +83,10 @@ public class OperatorJPanel {
             this.runStatus.setText(PropertiesDef.RunStatus); //运行中
             //this.runStatus.setCaretColor(Color.blue);
             this.runJbutton.setEnabled(false);
+            this.installJbutton.setEnabled(false);
             this.restartJbutton.setEnabled(true);
         } else if(this.isInstall){//已经安装，未运行状态
+            this.installJbutton.setEnabled(false);
             this.runStatus.setText(PropertiesDef.NotRunStatus); //未运行
             //this.installStatus.setCaretColor(Color.red);
             this.runJbutton.setEnabled(true);
@@ -103,6 +110,10 @@ public class OperatorJPanel {
         Container container = this.mainFrame.getContentPane();
         container.add(this.installJPanel, BorderLayout.NORTH);
         container.add(this.runJPanel, BorderLayout.CENTER);
+
+        //异步检查安装和运行状态
+       new Thread(new CheckInstallRunStatus(this, false)).start();
+
     }
 
     //tool监听类
@@ -117,10 +128,13 @@ public class OperatorJPanel {
                 if (result==PropertiesDef.TimeDialogNo){
                     installJbutton.setEnabled(true);
                 } else { //安装应用操作
-                    //TODO 安装服务
-
-                    //安装成功后，可执行安钮允许操作
-                    runJbutton.setEnabled(true);
+                    //安装服务
+                    if (ServerUtils.installProgram(Env.getEnv(PropertiesDef.ProgramHomeKey) + PropertiesDef.DockerProgramName, true))  {
+                        //安装成功后，可执行安钮允许操作
+                        //runJbutton.setEnabled(true);
+                    } else {
+                        installJbutton.setEnabled(true);
+                    }
                 }
             } else if (event.getActionCommand() == PropertiesDef.StartButtonName) { //启动服务
                 runJbutton.setEnabled(false);
@@ -161,6 +175,45 @@ public class OperatorJPanel {
             }
         }
 
+    }
+
+    class CheckInstallRunStatus implements Runnable{
+        private OperatorJPanel operatorJPanel;
+        private boolean isLog;
+        public CheckInstallRunStatus(OperatorJPanel operatorJPanel, boolean isLog){
+            this.operatorJPanel = operatorJPanel;
+            this.isLog = isLog;
+        }
+        @Override
+        public void run() {
+            while (true) {
+                //检查docker服务安装是否安装
+                boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, this.isLog);
+                //检查docker进程和容器是否运行
+                boolean isRun = ServerUtils.checkServerRun(PropertiesDef.DockerProcessName, PropertiesDef.DockerImageName, this.isLog);
+                try {
+                    operatorJPanel.isInstall = isInstall;
+                    operatorJPanel.isRun = isRun;
+                    if (isRun) { //运行状态
+                        operatorJPanel.runStatus.setText(PropertiesDef.RunStatus); //运行中
+                        operatorJPanel.runJbutton.setEnabled(false);
+                        operatorJPanel.restartJbutton.setEnabled(true);
+                    } else if(isInstall){//已经安装，未运行状态
+                        operatorJPanel.runStatus.setText(PropertiesDef.NotRunStatus); //未运行
+                        operatorJPanel.runJbutton.setEnabled(true);
+                        operatorJPanel.restartJbutton.setEnabled(false);
+                    } else {//未安装，未运行
+                        operatorJPanel.runStatus.setText(PropertiesDef.NotRunStatus); //未运行
+                        operatorJPanel.runJbutton.setEnabled(false);
+                        operatorJPanel.stopJbutton.setEnabled(false);
+                        operatorJPanel.restartJbutton.setEnabled(false);
+                    }
+                    TimeUnit.SECONDS.sleep(2L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
 }
