@@ -14,14 +14,15 @@
 
     <build>
         <finalName>SM</finalName>
-<!--        <resources>
+        <resources>
             <resource>
-                <directory>.</directory>
+                <targetPath>resources</targetPath>
+                <directory>src/main/resources/</directory>
                 <includes>
-                    <include>*.jpg</include>
+                    <include>*.properties</include>
                 </includes>
             </resource>
-        </resources>-->
+        </resources>
         <plugins>
             <!-- java编译插件 -->
             <plugin>

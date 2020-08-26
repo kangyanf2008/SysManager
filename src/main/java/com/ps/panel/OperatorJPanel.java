@@ -3,8 +3,8 @@ package com.ps.panel;
 import com.ps.constants.PropertiesDef;
 import com.ps.env.Env;
 import com.ps.frame.MainFrame;
+import com.ps.queue.LogQueue;
 import com.ps.utils.ServerUtils;
-import sun.rmi.runtime.NewThreadAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,11 +29,13 @@ public class OperatorJPanel {
     private JButton runJbutton;     //安装按钮
     private JButton stopJbutton;     //安装按钮
     private JButton restartJbutton;     //安装按钮
-    private volatile boolean isRun;                 //服务是否正常启动
+    private volatile boolean dockerIsRun;                 //服务是否正常启动
+    private volatile boolean imageIsRun;                 //服务是否正常启动
 
-    public OperatorJPanel(boolean isInstall, boolean isRun, MainFrame mainFrame) {
-        this.isRun = isRun;
+    public OperatorJPanel(boolean isInstall, boolean dockerIsRun, boolean imageIsRun, MainFrame mainFrame) {
+        this.dockerIsRun = dockerIsRun;
         this.isInstall = isInstall;
+        this.imageIsRun = imageIsRun;
         this.mainFrame = mainFrame;
         //安钮事件
         ActionMonitor monitor = new ActionMonitor();
@@ -79,7 +81,7 @@ public class OperatorJPanel {
         this.restartJbutton = new JButton(PropertiesDef.RestartButtonName);  //重启
         this.restartJbutton.addActionListener(monitor);
 
-        if (this.isRun) { //运行状态
+        if (this.dockerIsRun && this.imageIsRun) { //运行状态
             this.runStatus.setText(PropertiesDef.RunStatus); //运行中
             //this.runStatus.setCaretColor(Color.blue);
             this.runJbutton.setEnabled(false);
@@ -128,10 +130,38 @@ public class OperatorJPanel {
                 if (result==PropertiesDef.TimeDialogNo){
                     installJbutton.setEnabled(true);
                 } else { //安装应用操作
-                    //安装服务
+                    //安装启动服务
                     if (ServerUtils.installProgram(Env.getEnv(PropertiesDef.ProgramHomeKey) + PropertiesDef.DockerProgramName, true))  {
+
                         //安装成功后，可执行安钮允许操作
-                        //runJbutton.setEnabled(true);
+                        new Thread(new Runnable() { //异步检查是否处理成功
+                            @Override
+                            public void run() {
+                                while(true){
+                                    boolean imageIsRun = ServerUtils.checkImageRun(PropertiesDef.DockerImageName, false);
+                                    if (imageIsRun) {
+                                        try {
+                                            LogQueue.Push("####### 服务安装启动成功 #######");
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                        runJbutton.setEnabled(false);
+                                        imageIsRun = true;
+                                        dockerIsRun = true;
+                                        runJbutton.setEnabled(false);   //服务停止后，允许启动
+                                        restartJbutton.setEnabled(true); //服务停止后，不允许重启
+                                        runStatus.setText(PropertiesDef.RunLabelName); //运行状态
+                                        break;
+                                    }
+                                }
+                                try {
+                                    TimeUnit.SECONDS.sleep(2L);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
+
                     } else {
                         installJbutton.setEnabled(true);
                     }
@@ -142,11 +172,36 @@ public class OperatorJPanel {
                 if (result==PropertiesDef.TimeDialogNo){
                     runJbutton.setEnabled(true);
                 } else { //启动服务
-                    // TODO 启动服务
+                    if (ServerUtils.dockerServiceOperator(PropertiesDef.DockerRestartCmd, true)){
+                        boolean imageIsRun = ServerUtils.checkImageRun(PropertiesDef.DockerImageName, true);
+                        if (imageIsRun) {
+                            //服务启动成功后，设置允许进行服务停止和重启操作
+                            stopJbutton.setEnabled(true);
+                            restartJbutton.setEnabled(true);
+                            runStatus.setText(PropertiesDef.RunStatus); //运行状态
+                            runJbutton.setEnabled(false);
+                            imageIsRun = true;
+                            try {
+                                LogQueue.Push("####### 启动服务成功 #######");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
 
-                    //服务启动成功后，设置允许进行服务停止和重启操作
-                    stopJbutton.setEnabled(true);
-                    restartJbutton.setEnabled(true);
+                        } else {
+                            runStatus.setText(PropertiesDef.NotRunStatus); //未运行
+                            runJbutton.setEnabled(true);
+                            imageIsRun = false;
+                            try {
+                                LogQueue.Push("####### 启动服务失败 #######");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        dockerIsRun = true;
+                    } else {
+                        imageIsRun = false;
+                        dockerIsRun = false;
+                    }
                 }
             } else if (event.getActionCommand() == PropertiesDef.StopButtonName) { //停止服务
                 stopJbutton.setEnabled(false);
@@ -154,10 +209,33 @@ public class OperatorJPanel {
                 if (result==PropertiesDef.TimeDialogNo){
                     stopJbutton.setEnabled(true);
                 } else { //停止服务
-                    //TODO 停止服务
+                    if (ServerUtils.dockerServiceOperator(PropertiesDef.DockerStopCmd, true)){
+                        boolean imageIsRun = ServerUtils.checkImageRun(PropertiesDef.DockerImageName, true);
+                        if (!imageIsRun) {
+                            imageIsRun = false;
+                            runJbutton.setEnabled(true);   //服务停止后，允许启动
+                            restartJbutton.setEnabled(false); //服务停止后，不允许重启
+                            runStatus.setText(PropertiesDef.NotRunStatus); //运行状态
 
-                    runJbutton.setEnabled(true);   //服务停止后，允许启动
-                    restartJbutton.setEnabled(false); //服务停止后，不允许重启
+                            try {
+                                LogQueue.Push("####### 停止服务成功 #######");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            runStatus.setText(PropertiesDef.RunStatus); //未运行
+                            runJbutton.setEnabled(false);   //服务停止后，允许启动
+                            restartJbutton.setEnabled(true); //服务停止后，不允许重启
+                            imageIsRun = true;
+                            try {
+                                LogQueue.Push("####### 停止服务失败 #######");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+
                 }
             } else if (event.getActionCommand() == PropertiesDef.RestartButtonName) { //重启服务
                 restartJbutton.setEnabled(false);
@@ -166,14 +244,47 @@ public class OperatorJPanel {
                     restartJbutton.setEnabled(true);
                     stopJbutton.setEnabled(true);
                 } else {
-                    //TODO 重启服务
+                    if (ServerUtils.dockerServiceOperator(PropertiesDef.DockerRestartCmd, true)){
+                        boolean imageIsRun = ServerUtils.checkImageRun(PropertiesDef.DockerImageName, true);
+                        if (imageIsRun) {
+                            //设置允许重启操作
+                            runStatus.setText(PropertiesDef.RunStatus); //运行状态
+                            stopJbutton.setEnabled(true);
+                            restartJbutton.setEnabled(true);
+                            runJbutton.setEnabled(false);
+                            imageIsRun = true;
+                            try {
+                                LogQueue.Push("####### 生启成功 #######");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
 
-                    //设置允许重启操作
-                    stopJbutton.setEnabled(true);
-                    restartJbutton.setEnabled(true);
-                }
+                        } else {
+                            runStatus.setText(PropertiesDef.NotRunStatus); //未运行
+                            runJbutton.setEnabled(true);
+                            stopJbutton.setEnabled(false);
+                            restartJbutton.setEnabled(false);
+                            imageIsRun = false;
+                            try {
+                                LogQueue.Push("####### 生启失败 #######");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        dockerIsRun = true;
+                    } else {
+                        try {
+                            LogQueue.Push("####### 先重新安装 #######");
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        imageIsRun = false;
+                        dockerIsRun = false;
+                    }
+
+                }//end if
             }
-        }
+        }//end else if (event.getActionCommand() == PropertiesDef.RestartButtonName) { //重启服务
 
     }
 
@@ -190,11 +301,12 @@ public class OperatorJPanel {
                 //检查docker服务安装是否安装
                 boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, this.isLog);
                 //检查docker进程和容器是否运行
-                boolean isRun = ServerUtils.checkServerRun(PropertiesDef.DockerProcessName, PropertiesDef.DockerImageName, this.isLog);
+                boolean dockerIsRun = ServerUtils.checkDockerRun(PropertiesDef.DockerProcessName, this.isLog);
+                boolean imageIsRun = ServerUtils.checkImageRun(PropertiesDef.DockerImageName, this.isLog);
                 try {
                     operatorJPanel.isInstall = isInstall;
-                    operatorJPanel.isRun = isRun;
-                    if (isRun) { //运行状态
+                    operatorJPanel.dockerIsRun = imageIsRun;
+                    if (dockerIsRun && imageIsRun) { //运行状态
                         operatorJPanel.runStatus.setText(PropertiesDef.RunStatus); //运行中
                         operatorJPanel.runJbutton.setEnabled(false);
                         operatorJPanel.restartJbutton.setEnabled(true);

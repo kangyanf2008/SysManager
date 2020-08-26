@@ -30,7 +30,7 @@ public class PropertiesDef {
     public static final String DockerServiceName = "Docker*"; //服务名
     public static final String DockerProcessName = "\"Docker Desktop\""; //进程名
     //public static final String DockerImageName = "owlook*";      //docker镜像名
-    public static final String DockerImageName = "";      //docker镜像名
+
     public static final String DockerProgramName = "DockerDesktopInstaller.exe";           //安装程序名
     public static final String ProgramHomeKey = "PROGRAM_HOME";           //程序运行根目录
 
@@ -39,4 +39,18 @@ public class PropertiesDef {
 
     public static final int TimeDialogYes = 0;    //确认
     public static final int TimeDialogNo = 1;     //取消
+
+    public static final String DockerImageName= "Docker.Image.Name";
+    public static final String DockerTaskList= "Docker.Task.List";
+
+    /**
+     * docker命令
+     */
+    public static final String DockerRunCmd = "run";
+    public static final String DockerStartCmd = "start";
+    public static final String DockerRestartCmd = "restart";
+    public static final String DockerStopCmd = "stop";
+    public static final String DockerInitCmd = "init";
+    public static final String DockerReInstallCmd = "reInstall";
+    public static final String DockerDeleteInstallCmd = "delete";
 }
