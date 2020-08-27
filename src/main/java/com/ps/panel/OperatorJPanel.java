@@ -308,8 +308,9 @@ public class OperatorJPanel {
                             runJbutton.setEnabled(false);
                             imageIsRun = true;
                             dockerIsRun = true;
-                            runJbutton.setEnabled(false);   //服务停止后，允许启动
-                            restartJbutton.setEnabled(true); //服务停止后，不允许重启
+                            runJbutton.setEnabled(false);   //启动成功后，不允许再运行
+                            stopJbutton.setEnabled(true); //允许服务停止
+                            restartJbutton.setEnabled(true); //允许服务重启
                             runStatus.setText(PropertiesDef.RunLabelName); //运行状态
                             break;
                         }//end if
