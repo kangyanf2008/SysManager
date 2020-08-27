@@ -23,7 +23,7 @@ public class PropertiesDef {
     public static final String RestartButtonName = "重启";
 
 
-    public static final int MainFrameWith = 500;
+    public static final int MainFrameWith = 700;
     public static final int MainFrameHigh = 400;
 
     //运行配置参数
@@ -35,19 +35,21 @@ public class PropertiesDef {
     public static final String ProgramHomeKey = "PROGRAM_HOME";           //程序运行根目录
 
     public static final int LogViewRows = 300;
-    public static final int LogViewColumns = 150;
+    public static final int LogViewColumns = 650;
 
     public static final int TimeDialogYes = 0;    //确认
     public static final int TimeDialogNo = 1;     //取消
 
     public static final String DockerImageName= "Docker.Image.Name";
     public static final String DockerTaskList= "Docker.Task.List";
+    public static final String DockerSrcImageName= "Docker.Src.Image.Name";
 
     /**
      * docker命令
      */
-    public static final String DockerRunCmd = "run";
+    public static final String DockerRunCmd = "run";  //运行
     public static final String DockerStartCmd = "start";
+    public static final String DockerLoadImageCmd = "loadImage";
     public static final String DockerRestartCmd = "restart";
     public static final String DockerStopCmd = "stop";
     public static final String DockerInitCmd = "init";

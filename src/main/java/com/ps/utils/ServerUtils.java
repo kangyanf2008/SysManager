@@ -76,8 +76,43 @@ public class ServerUtils {
         return false;
     }
 
+
     //判断服务和映射是否运行
-    public static boolean checkImageRun(String imageName, boolean isLog) {
+    public static boolean checkImageHaveRunHistory(boolean isLog) {
+        try {
+            //判断映像是否运行
+            String cmd = "docker ps -a";
+            String dockerIsRun = executeCMD(cmd, isLog);
+            if (null != dockerIsRun || dockerIsRun != "") {
+                if (isLog) {
+                    LogQueue.Push(dockerIsRun);
+                }
+                String[] images = LoadConfig.getConfig(PropertiesDef.DockerImageName).split("\\|");
+                if (images.length > 0) {
+                    String lowerCase = dockerIsRun.toLowerCase();
+                    for (String image : images) {
+                        if (lowerCase.indexOf(image.toLowerCase()) < 0) {
+                            return false;
+                        }
+                    }
+                    return true;
+                } else {
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            try {
+                if (isLog) {
+                    LogQueue.Push(e.getMessage());
+                }
+            } catch (Exception e2) {
+            }
+        }
+        return false;
+    }
+
+    public static boolean checkImageRun(boolean isLog) {
         try {
             //判断映像是否运行
             String cmd = "docker ps";
@@ -86,7 +121,7 @@ public class ServerUtils {
                 if (isLog) {
                     LogQueue.Push(dockerIsRun);
                 }
-                String[] images = LoadConfig.getConfig(PropertiesDef.DockerImageName).split("|");
+                String[] images = LoadConfig.getConfig(PropertiesDef.DockerImageName).split("\\|");
                 if (images.length > 0) {
                     String lowerCase = dockerIsRun.toLowerCase();
                     for (String image : images) {
@@ -94,7 +129,41 @@ public class ServerUtils {
                             return false;
                         }
                     }
+                    return true;
                 } else {
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            try {
+                if (isLog) {
+                    LogQueue.Push(e.getMessage());
+                }
+            } catch (Exception e2) {
+            }
+        }
+        return false;
+    }
+
+    //验证加载镜像是否成功
+    public static boolean checkImageLoad(boolean isLog) {
+        try {
+            //判断映像是否运行
+            String cmd = "docker images";
+            String dockerIsRun = executeCMD(cmd, isLog);
+            if (null != dockerIsRun || dockerIsRun != "") {
+                if (isLog) {
+                    LogQueue.Push(dockerIsRun);
+                }
+                String[] images = LoadConfig.getConfig(PropertiesDef.DockerSrcImageName).split("\\|");
+                if (images.length > 0) {
+                    String lowerCase = dockerIsRun.toLowerCase();
+                    for (String image : images) {
+                        if (lowerCase.indexOf(image.toLowerCase()) < 0) {
+                            return false;
+                        }
+                    }
                     return true;
                 }
             }
@@ -189,6 +258,44 @@ public class ServerUtils {
                 process.destroy();
             }
         }
+    }
+    //执行命令
+    public static String execute(String cmd, boolean isLog){
+        Process process = null;
+        try {
+            String strCmd = "cmd /c " + cmd;
+            //执行指令操作放入日志队列
+            if (isLog) {
+                LogQueue.Push(strCmd);
+            }
+            process = runtime.exec(strCmd);
+
+            InputStream is = process.getInputStream();
+            InputStreamReader isr = new InputStreamReader(is, "gbk");
+            BufferedReader br = new BufferedReader(isr);
+            String content = br.readLine();
+            StringBuilder sb = new StringBuilder();
+            while (content != null) {
+                sb.append(content + "\n");
+                content = br.readLine();
+            }
+
+            return sb.toString();
+        } catch (Exception e) {
+            //e.printStackTrace();
+            try {
+                if (isLog) {
+                    LogQueue.Push(e.getMessage());
+                }
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+        return "";
     }
 
     //执行命令

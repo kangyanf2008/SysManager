@@ -26,12 +26,13 @@ public class MainFrame  extends JFrame {
         this.setName(PropertiesDef.MainFrameName);
 
         //检查docker服务安装是否安装
-        boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, true);
+        boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, false);
         //检查docker进程和容器是否运行
-        boolean dokcerIsRun = ServerUtils.checkDockerRun(PropertiesDef.DockerProcessName, true);
-        boolean imageIsRun = ServerUtils.checkImageRun(PropertiesDef.DockerImageName, true);
+        boolean dokcerIsRun = ServerUtils.checkDockerRun(PropertiesDef.DockerProcessName, false);
+        boolean imageIsRun = ServerUtils.checkImageRun( false);
+        boolean imageIsLoad = ServerUtils.checkImageLoad(false);
         //操作区域
-        this.operatorJpanel = new OperatorJPanel(isInstall, dokcerIsRun, imageIsRun,this);
+        this.operatorJpanel = new OperatorJPanel(isInstall, dokcerIsRun, imageIsRun,imageIsLoad,this);
 
 
         //日志区域
