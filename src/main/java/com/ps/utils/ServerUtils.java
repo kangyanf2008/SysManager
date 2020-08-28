@@ -18,9 +18,6 @@ public class ServerUtils {
             String[] channelCmd = {"findstr /i service_name.*", "findstr /i " + serviceName};
             //String r = executeCMD("sc query type= all state= all | findstr /i service_name.* | findstr /i "+serviceName);
             String r = executeCMD(cmd, channelCmd, isLog);
-            if (isLog) {
-                LogQueue.Push(r);
-            }
             if (r.toLowerCase().indexOf("com.docker.service".toLowerCase()) > 0) {
                 return true;
             }
@@ -42,11 +39,6 @@ public class ServerUtils {
             if (serviceName != null && "" != serviceName) {
                 String[] channelCmd = {"findstr /i " + serviceName};
                 String serviceIsRun = executeCMD("tasklist ", channelCmd, isLog);
-                if (null != serviceIsRun || serviceIsRun != "") {
-                    if (isLog) {
-                        LogQueue.Push(serviceIsRun);
-                    }
-                }
 
                 if (null == serviceIsRun || serviceIsRun == "") {
                     return false;
@@ -84,9 +76,6 @@ public class ServerUtils {
             String cmd = "docker ps -a";
             String dockerIsRun = executeCMD(cmd, isLog);
             if (null != dockerIsRun || dockerIsRun != "") {
-                if (isLog) {
-                    LogQueue.Push(dockerIsRun);
-                }
                 String[] images = LoadConfig.getConfig(PropertiesDef.DockerImageName).split("\\|");
                 if (images.length > 0) {
                     String lowerCase = dockerIsRun.toLowerCase();
@@ -245,7 +234,14 @@ public class ServerUtils {
             String content = br.readLine();
             StringBuilder sb = new StringBuilder();
             while (content != null) {
-                sb.append(content + "\n");
+                String tem = content + "\n";
+                sb.append(tem);
+                try {
+                    if (isLog) {
+                        LogQueue.Push(tem);
+                    }
+                } catch (Exception e2) {
+                }
                 content = br.readLine();
             }
 
@@ -276,7 +272,14 @@ public class ServerUtils {
             String content = br.readLine();
             StringBuilder sb = new StringBuilder();
             while (content != null) {
-                sb.append(content + "\n");
+                String tem = content + "\n";
+                sb.append(tem);
+                try {
+                    if (isLog) {
+                        LogQueue.Push(tem);
+                    }
+                } catch (Exception e2) {
+                }
                 content = br.readLine();
             }
 
@@ -313,7 +316,14 @@ public class ServerUtils {
             String content = br.readLine();
             StringBuilder sb = new StringBuilder();
             while (content != null) {
-                sb.append(content + "\n");
+                String tem = content + "\n";
+                sb.append(tem);
+                try {
+                    if (isLog) {
+                        LogQueue.Push(tem);
+                    }
+                } catch (Exception e2) {
+                }
                 content = br.readLine();
             }
             return sb.toString();

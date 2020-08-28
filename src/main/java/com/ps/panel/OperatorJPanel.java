@@ -154,24 +154,32 @@ public class OperatorJPanel {
                             public void run() {
                                 //验证docker服务是否启动
                                 while (true) {
-                                    boolean dockerIsRun = ServerUtils.checkDockerRun(PropertiesDef.DockerImageName, false);
-                                    if (dockerIsRun) {
+                                    boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, false);
+                                    if (isInstall) {
                                         try {
                                             LogQueue.Push("####### 服务安装成功 #######");
                                         } catch (InterruptedException e) {
                                             e.printStackTrace();
                                         }
-                                        OperatorJPanel.this.dockerIsRun = true;
-                                        installJbutton.setEnabled(false);   //服务停止后，允许启动
-                                        OperatorJPanel.this.installStatus.setText(PropertiesDef.InstallStatus); //运行状态
-                                        //重启机器
-                                        try {
-                                            LogQueue.Push("####### 请重启机器 #######");
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
+                                        int result = new TimeDialog().showDialog(mainFrame, "请立即重启机器", 30);
+                                        if (result == PropertiesDef.TimeDialogYes) {
+                                            OperatorJPanel.this.dockerIsRun = true;
+                                            installJbutton.setEnabled(false);   //服务停止后，允许启动
+                                            OperatorJPanel.this.installStatus.setText(PropertiesDef.InstallStatus); //运行状态
+                                            //重启机器
+                                            try {
+                                                LogQueue.Push("####### 正在重启机器 #######");
+                                                TimeUnit.SECONDS.sleep(1L);
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            }
+                                            ServerUtils.execute("shutdown -r -t 0", true);
+                                            break;
+                                        } else {
+                                            new TimeDialog().showDialog(mainFrame, "程序退出", 1);
+                                            System.exit(0);
                                         }
-                                        ServerUtils.execute("shutdown -r -t 5", true);
-                                        break;
+
                                     }
                                     try {
                                         TimeUnit.SECONDS.sleep(2L);
