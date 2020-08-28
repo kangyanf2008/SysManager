@@ -218,7 +218,7 @@ public class ServerUtils {
     }
 
     //执行命令
-    private static String executeCMD(String cmd, boolean isLog) throws Exception {
+    public static String executeCMD(String cmd, boolean isLog) throws Exception {
         Process process = null;
         try {
             String strCmd = "cmd /c " + cmd;
@@ -227,7 +227,6 @@ public class ServerUtils {
                 LogQueue.Push(strCmd);
             }
             process = runtime.exec(strCmd);
-
             InputStream is = process.getInputStream();
             InputStreamReader isr = new InputStreamReader(is, "gbk");
             BufferedReader br = new BufferedReader(isr);

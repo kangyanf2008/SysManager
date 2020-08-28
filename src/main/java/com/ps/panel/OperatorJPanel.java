@@ -270,8 +270,8 @@ public class OperatorJPanel {
                     ServerUtils.dockerServiceOperator(PropertiesDef.DockerLoadImageCmd, true);
                     //验证加载镜像是否成功
                     while (true) {
-                        boolean imageIsLoad = ServerUtils.checkImageLoad(true);
-                        if (imageIsRun) {
+                        boolean isLoad = ServerUtils.checkImageLoad(false);
+                        if (isLoad) {
                             try {
                                 LogQueue.Push("\r\n");
                                 LogQueue.Push("####### 服务加载成功 #######");
@@ -305,8 +305,8 @@ public class OperatorJPanel {
                     ServerUtils.dockerServiceOperator(PropertiesDef.DockerInitCmd, true);
                     //验证镜像是否启动成功
                     while (true) {
-                        boolean imageIsRun = ServerUtils.checkImageRun(false);
-                        if (imageIsRun) {
+                        boolean isRun = ServerUtils.checkImageRun(false);
+                        if (isRun) {
                             try {
                                 LogQueue.Push("\r\n");
                                 LogQueue.Push("####### 服务启动成功 #######");
