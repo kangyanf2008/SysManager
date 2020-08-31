@@ -10,6 +10,7 @@ if "%1" equ "stop" goto stop_docker
 if "%1" equ "delete" goto delete_docker
 if "%1" equ "init" goto init
 if "%1" equ "loadImage" goto load_images
+if "%1" equ "init_data" goto init_data
 
 echo end
 exit /b
