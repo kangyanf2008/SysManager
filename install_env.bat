@@ -4,12 +4,12 @@ set CUR_DIR=%~dp0
 
 if "%1" equ "install" goto install
 if "%1" equ "start" goto start_docker
-if "%1" equ "reInstall" goto reInstall
 if "%1" equ "run" goto run_docker
 if "%1" equ "restart" goto restart_docker
 if "%1" equ "stop" goto stop_docker
 if "%1" equ "delete" goto delete_docker
 if "%1" equ "init" goto init
+if "%1" equ "loadImage" goto load_images
 
 echo end
 exit /b
@@ -73,7 +73,7 @@ goto :eof
     echo "run redis"
     call %CUR_DIR%docker\redis\docker.bat run
 	set CUR_DIR=%~dp0
-
+	
     echo "run mongo"
     call %CUR_DIR%docker\mongo\docker.bat run
 	set CUR_DIR=%~dp0
@@ -81,11 +81,11 @@ goto :eof
     echo "run emqx"
     call %CUR_DIR%docker\emqx\docker.bat run
 	set CUR_DIR=%~dp0
-
+	
 	echo "run terminal-web-tenant"
     call %CUR_DIR%docker\terminal-web-tenant\docker.bat run
 	set CUR_DIR=%~dp0
-
+	
 ::	echo "run terminal-web-admin"
 ::    call %CUR_DIR%docker\terminal-web-admin\docker.bat run
 ::	set CUR_DIR=%~dp0
@@ -100,7 +100,7 @@ goto :eof
     echo "restart nginx"
     call %CUR_DIR%docker\nginx\docker.bat restart
 	set CUR_DIR=%~dp0
-
+	
     echo "restart redis"
     call %CUR_DIR%docker\redis\docker.bat restart
 	set CUR_DIR=%~dp0
@@ -108,15 +108,15 @@ goto :eof
     echo "restart mongo"
     call %CUR_DIR%docker\mongo\docker.bat restart
 	set CUR_DIR=%~dp0
-
+	
     echo "restart emqx"
     call %CUR_DIR%docker\emqx\docker.bat restart
 	set CUR_DIR=%~dp0
-
+	
 	echo "restart terminal-web-tenant"
     call %CUR_DIR%docker\terminal-web-tenant\docker.bat restart
 	set CUR_DIR=%~dp0
-
+	
 ::	echo "restart terminal-web-admin"
 ::    call %CUR_DIR%docker\terminal-web-admin\docker.bat restart
 ::	set CUR_DIR=%~dp0
@@ -126,11 +126,11 @@ goto :eof
 	echo "stop terminal-web-tenant"
     call %CUR_DIR%docker\terminal-web-tenant\docker.bat stop
 	set CUR_DIR=%~dp0
-
+	
 ::	echo "stop terminal-web-admin"
 ::    call %CUR_DIR%docker\terminal-web-admin\docker.bat stop
 ::	set CUR_DIR=%~dp0
-
+	
     echo "stop mysql"
     call %CUR_DIR%docker\mysql\docker.bat stop
 	set CUR_DIR=%~dp0
@@ -163,7 +163,7 @@ goto :eof
 	set oldTime=%time:~0,2%%time:~3,2%%time:~6,2%
 	call :timeWait
 	if "%ERRORLEVEL%"=="0" (echo "mysql timeWait success") else (echo "mysql timeWait fail")
-
+	
     ::init mysql
 	docker cp sql mysql:/tmp
     docker exec mysql //bin/bash -c "mysql -uroot -pcimevue@1234 < /tmp/sql/terminal_lite.sql"
@@ -180,7 +180,7 @@ goto :eof
 	echo "delete terminal-web-tenant"
     call %CUR_DIR%docker\terminal-web-tenant\docker.bat delete
 	set CUR_DIR=%~dp0
-
+	
 ::	echo "delete terminal-web-admin"
 ::    call %CUR_DIR%docker\terminal-web-admin\docker.bat delete
 ::	set CUR_DIR=%~dp0
