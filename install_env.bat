@@ -57,6 +57,9 @@ goto:eof
     call %CUR_DIR%docker\terminal-web-tenant\docker.bat start
 	set CUR_DIR=%~dp0
 	
+	call %CUR_DIR%\cutIcon.bat CreateDesktopShort
+	set CUR_DIR=%~dp0
+	
 ::	echo "start terminal-web-admin"
 ::    call %CUR_DIR%docker\terminal-web-admin\docker.bat start
 ::	set CUR_DIR=%~dp0
@@ -85,6 +88,9 @@ goto :eof
 	
 	echo "run terminal-web-tenant"
     call %CUR_DIR%docker\terminal-web-tenant\docker.bat run
+	set CUR_DIR=%~dp0
+	
+	call %CUR_DIR%\cutIcon.bat CreateDesktopShort
 	set CUR_DIR=%~dp0
 	
 ::	echo "run terminal-web-admin"
@@ -118,6 +124,8 @@ goto :eof
     call %CUR_DIR%docker\terminal-web-tenant\docker.bat restart
 	set CUR_DIR=%~dp0
 	
+	call %CUR_DIR%\cutIcon.bat CreateDesktopShort
+	set CUR_DIR=%~dp0
 ::	echo "restart terminal-web-admin"
 ::    call %CUR_DIR%docker\terminal-web-admin\docker.bat restart
 ::	set CUR_DIR=%~dp0
