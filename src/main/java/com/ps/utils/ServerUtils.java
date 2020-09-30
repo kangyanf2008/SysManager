@@ -1,5 +1,8 @@
 package com.ps.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.ps.config.LoadConfig;
 import com.ps.constants.PropertiesDef;
 import com.ps.env.Env;
@@ -297,6 +300,77 @@ public class ServerUtils {
                 process.destroy();
             }
         }
+        return "";
+    }
+
+    private static String getDockerInspect(String containerName, boolean isLog) {
+        Process process = null;
+        try {
+            String strCmd = "cmd /c docker inspect " + containerName;
+            //执行指令操作放入日志队列
+            if (isLog) {
+                LogQueue.Push(strCmd);
+            }
+            process = runtime.exec(strCmd);
+
+            InputStream is = process.getInputStream();
+            InputStreamReader isr = new InputStreamReader(is, "gbk");
+            BufferedReader br = new BufferedReader(isr);
+            String content = br.readLine();
+            StringBuilder sb = new StringBuilder();
+            while (content != null) {
+                String tem = content + "\n";
+                sb.append(tem);
+                try {
+                    if (isLog) {
+                        LogQueue.Push(tem);
+                    }
+                } catch (Exception e2) {
+                }
+                content = br.readLine();
+            }
+
+            return sb.toString();
+        } catch (Exception e) {
+            //e.printStackTrace();
+            try {
+                if (isLog) {
+                    LogQueue.Push(e.getMessage());
+                }
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+        return "";
+    }
+
+    public static String hostIp (String containerName, boolean isLog) {
+        String inspectInfo = getDockerInspect(containerName, isLog);
+        if (inspectInfo == null || "".equals(inspectInfo)) {
+            return "";
+        }
+        JSONArray arr = JSON.parseArray(inspectInfo);
+        //只取第一级配置
+        if (arr != null && arr.size() > 0) {
+            JSONObject applicationInspectJson= (JSONObject)arr.get(0);
+            if (applicationInspectJson.containsKey("HostConfig")) {
+                JSONObject config = applicationInspectJson.getJSONObject("HostConfig");
+                if (config.containsKey("ExtraHosts")) {
+                    JSONArray extraHosts = config.getJSONArray("ExtraHosts");
+                    if ( extraHosts != null && extraHosts.size() > 0 ) {
+                        String hostName = extraHosts.getString(0);
+                        String[] ips = hostName.split(":");
+                        if (ips.length > 0 ){
+                            return ips[1];
+                        }
+                    } //end if
+                }//end if
+            }//end if
+        }//end if
         return "";
     }
 

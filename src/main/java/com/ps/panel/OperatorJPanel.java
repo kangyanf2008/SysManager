@@ -1,15 +1,19 @@
 package com.ps.panel;
 
+import com.ps.config.LoadConfig;
 import com.ps.constants.PropertiesDef;
 import com.ps.env.Env;
 import com.ps.frame.MainFrame;
 import com.ps.queue.LogQueue;
+import com.ps.utils.IpUtils;
 import com.ps.utils.ServerUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 public class OperatorJPanel {
@@ -20,7 +24,13 @@ public class OperatorJPanel {
     private JLabel installLable;     //安装标签
     private JLabel installStatus;     //安装状态
     private JButton installJbutton;   //安装按钮
+    private JButton reloadJbutton;    //重新加载
     private volatile boolean isInstall;             //服务是否安装
+    private JLabel ipLable;     //IP列表
+    private JComboBox<String> selectIp;   //IP下拉框
+
+    private String nginxIP;
+    private String applicationIp;
 
     //运行工具栏
     private JPanel runJPanel;
@@ -49,6 +59,22 @@ public class OperatorJPanel {
         this.installLable = new JLabel();    //安装标题
         this.installLable.setText(PropertiesDef.InstallLabelName); //标题
 
+        this.reloadJbutton = new JButton(PropertiesDef.ReloadApplicationButtonName);        //重新加载应用
+        this.reloadJbutton.addActionListener(monitor);
+        this.ipLable = new JLabel();
+        this.ipLable.setText(PropertiesDef.IpLable);    //ip标签
+        this.selectIp = new JComboBox();                 //IP选择框
+        //读取本机IP
+        java.util.List<String> localIPs = IpUtils.getLocalIp();
+        if (localIPs != null && localIPs.size() > 0)  {
+            this.selectIp.addItem("111111");
+            this.selectIp.addItem("222222");
+            this.selectIp.addItem("333333");
+ /*           localIPs.forEach(o -> {
+                this.selectIp.addItem(o);
+            });*/
+        }
+
         //判断是否已经安装，如果为true，则禁止重新安装
         //安装按钮
         this.installJbutton = new JButton(PropertiesDef.InstallButtonName);
@@ -57,11 +83,9 @@ public class OperatorJPanel {
         if (this.isInstall) {
             this.installJbutton.setEnabled(false);
             this.installStatus.setText(PropertiesDef.InstallStatus); //安装状态
-            //this.installStatus.setCaretColor(Color.blue);
         } else {
             this.installJbutton.setEnabled(true);
             this.installStatus.setText(PropertiesDef.NotInstallStatus); //未安装
-            //this.installStatus.setCaretColor(Color.red);
         }
 
         this.installJPanel = new JPanel(); //安装panel
@@ -69,6 +93,9 @@ public class OperatorJPanel {
         this.installJPanel.add(installLable);    //标签
         this.installJPanel.add(installStatus);   //状态
         this.installJPanel.add(installJbutton);  //按钮
+        this.installJPanel.add(reloadJbutton);  //重新加载
+        this.installJPanel.add(this.ipLable);    //ip标签
+        this.installJPanel.add(this.selectIp);   //IP下拉框
 
         /**
          * 运行panel
@@ -86,14 +113,12 @@ public class OperatorJPanel {
 
         if (this.dockerIsRun && this.imageIsRun) { //运行状态
             this.runStatus.setText(PropertiesDef.RunStatus); //运行中
-            //this.runStatus.setCaretColor(Color.blue);
             this.runJbutton.setEnabled(false);
             this.installJbutton.setEnabled(false);
             this.restartJbutton.setEnabled(true);
         } else if (this.isInstall) {//已经安装，未运行状态
             this.installJbutton.setEnabled(false);
             this.runStatus.setText(PropertiesDef.NotRunStatus); //未运行
-            //this.installStatus.setCaretColor(Color.red);
             this.runJbutton.setEnabled(true);
             this.restartJbutton.setEnabled(false);
             if (!imageIsRun) { //未运行状态
@@ -104,7 +129,6 @@ public class OperatorJPanel {
             }
         } else {//未安装，未运行
             this.runStatus.setText(PropertiesDef.NotRunStatus); //未运行
-            //this.installStatus.setCaretColor(Color.red);
             this.runJbutton.setEnabled(false);
             this.stopJbutton.setEnabled(false);
             this.restartJbutton.setEnabled(false);
@@ -118,6 +142,7 @@ public class OperatorJPanel {
         this.runJPanel.add(stopJbutton);
         this.runJPanel.add(restartJbutton);
 
+        //容器显示内容
         Container container = this.mainFrame.getContentPane();
         container.add(this.installJPanel, BorderLayout.NORTH);
         container.add(this.runJPanel, BorderLayout.CENTER);
@@ -187,57 +212,6 @@ public class OperatorJPanel {
                                         e.printStackTrace();
                                     }
                                 }
-                               /*
-                               //加载docker镜像成功
-                                ServerUtils.dockerServiceOperator(PropertiesDef.DockerLoadImageCmd, true);
-                                //验证加载镜像是否成功
-                                while(true){
-                                    boolean imageIsLoad = ServerUtils.checkImageLoad(false);
-                                    if (imageIsRun) {
-                                        try {
-                                            LogQueue.Push("####### 服务加载成功 #######");
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                        runJbutton.setEnabled(false);
-                                        OperatorJPanel.this.imageIsLoad = true;
-                                        runJbutton.setEnabled(false);   //服务停止后，允许启动
-                                        restartJbutton.setEnabled(false); //服务停止后，不允许重启
-                                        runStatus.setText(PropertiesDef.RunLabelName); //运行状态
-                                        break;
-                                    }
-                                    try {
-                                        TimeUnit.SECONDS.sleep(2L);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                //初始化系统镜像
-                                ServerUtils.dockerServiceOperator(PropertiesDef.DockerInitCmd, true);
-                                //验证镜像是否启动成功
-                                while(true){
-                                    boolean imageIsRun = ServerUtils.checkImageRun(PropertiesDef.DockerImageName, false);
-                                    if (imageIsRun) {
-                                        try {
-                                            LogQueue.Push("####### 服务安装启动成功 #######");
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                        runJbutton.setEnabled(false);
-                                        imageIsRun = true;
-                                        dockerIsRun = true;
-                                        runJbutton.setEnabled(false);   //服务停止后，允许启动
-                                        restartJbutton.setEnabled(true); //服务停止后，不允许重启
-                                        runStatus.setText(PropertiesDef.RunLabelName); //运行状态
-                                        break;
-                                    }
-                                    try {
-                                        TimeUnit.SECONDS.sleep(2L);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                }*/
                             }//end run
                         }).start();
 
@@ -458,6 +432,10 @@ public class OperatorJPanel {
                     }
 
                 }//end if
+            } else if ( event.getActionCommand() == PropertiesDef.ReloadApplicationButtonName ){ //重新加载应用
+               // reloadJbutton.setEnabled(false);
+                System.out.println(selectIp.getSelectedItem());
+
             }
         }//end else if (event.getActionCommand() == PropertiesDef.RestartButtonName) { //重启服务
 
@@ -480,7 +458,67 @@ public class OperatorJPanel {
                 //检查docker进程和容器是否运行
                 boolean dockerIsRun = ServerUtils.checkDockerRun(PropertiesDef.DockerProcessName, this.isLog);
                 boolean imageIsRun = ServerUtils.checkImageRun(this.isLog);
+
+                //读取本机IP
+                java.util.List<String> ips = IpUtils.getLocalIp();
+
                 try {
+                    if (ips != null && ips.size() > 0) {
+
+                        HashMap<String,String> ipMap = new HashMap<>(); //本机当前所有IP地址
+                        HashMap<String,String> selectIpMap = new HashMap<>();//下拉框当前已经存存在的地址
+
+                        //把select下拉菜单中的数据，放入map集合中
+                        for (int i=0; i < selectIp.getItemCount(); i++) {
+                            String item =  selectIp.getItemAt(i);
+                            selectIpMap.put(item, item);
+                        }
+                        //循环本机IP列表，把select中不存在的本的IP地址，放入select
+                        ips.forEach(o->{
+                            //如果本机select下拉菜单不存在数据，则放
+                            if (!selectIpMap.containsKey(o)){
+                                selectIp.addItem(o);
+                                System.out.println("adddddddd"+o);
+                            }
+                            ipMap.put(o, o);
+                        });
+
+                        //遍历select菜单，删除本机不存在的IP item
+                        for (int i=0; i < selectIp.getItemCount();) {
+                            String item =  selectIp.getItemAt(i);
+                            System.out.println("remote====================="+item);
+                            //保存需要删除的select列表
+                            if (!ipMap.containsKey(item)) {
+                                System.out.println("remove         "+item);
+                               // selectIp.removeItemAt(i);
+                                //continue;
+                            }
+                            i++;
+                        }
+
+                        //查看应用镜像IP地址是否不存在
+                        String applicationImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.ApplicationContainerName), false);
+                        //应用IP
+                        if (applicationImageHostIp != null && applicationImageHostIp != "") {
+                            applicationIp = applicationImageHostIp;
+                            //reload应用
+                            if (!ipMap.containsKey(applicationIp)) {
+
+                            }
+                        }
+
+                        //查看应用镜像IP地址是否不存在
+                        String nginxImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.NginxContainerName), false);
+                        //nginxIp
+                        if (nginxImageHostIp != null && nginxImageHostIp != "") {
+                            nginxIP = nginxImageHostIp;
+                            //reload应用
+                            if (!ipMap.containsKey(applicationIp)) {
+
+                            }
+                        }
+                    } //
+
                     operatorJPanel.isInstall = isInstall;
                     operatorJPanel.dockerIsRun = imageIsRun;
                     if (dockerIsRun && imageIsRun) { //运行状态

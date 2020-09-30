@@ -7,6 +7,7 @@ import com.ps.utils.ServerUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 public class MainFrame  extends JFrame {
 
@@ -24,6 +25,10 @@ public class MainFrame  extends JFrame {
     private void createFrame() {
         this.setTitle(PropertiesDef.MainFrameTitle);
         this.setName(PropertiesDef.MainFrameName);
+        String url = MainFrame.class.getResource("/").getPath();
+        url += (File.separator+"resources"+File.separator+"icon.png");
+        Image image = Toolkit.getDefaultToolkit().getImage(url);
+        this.setIconImage(image);
 
         //检查docker服务安装是否安装
         boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, false);

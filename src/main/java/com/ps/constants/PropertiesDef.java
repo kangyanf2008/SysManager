@@ -11,6 +11,8 @@ public class PropertiesDef {
     public static final String NotInstallStatus = "  未安装  ";
     public static final String InstallStatus = "  已安装  ";
     public static final String InstallButtonName = "安装";
+    public static final String ReloadApplicationButtonName = "重新加载应用";
+    public static final String IpLable = "　　　　　　　　　　　　　　　　　　　IP列表:";
 
     /**
      * 运行区域
@@ -40,9 +42,11 @@ public class PropertiesDef {
     public static final int TimeDialogYes = 0;    //确认
     public static final int TimeDialogNo = 1;     //取消
 
-    public static final String DockerImageName= "Docker.Image.Name";
-    public static final String DockerTaskList= "Docker.Task.List";
-    public static final String DockerSrcImageName= "Docker.Src.Image.Name";
+    public static final String DockerImageName = "Docker.Image.Name";
+    public static final String DockerTaskList = "Docker.Task.List";
+    public static final String DockerSrcImageName = "Docker.Src.Image.Name";
+    public static final String ApplicationContainerName = "Application.Container.Name";
+    public static final String NginxContainerName = "Nginx.Container.Name";
 
     /**
      * docker命令
