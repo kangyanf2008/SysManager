@@ -496,7 +496,7 @@ public class OperatorJPanel {
                 }
                 try {
                     LogQueue.Push("\r\n");
-                    LogQueue.Push("####### 应用加载完居 #######");
+                    LogQueue.Push("####### 应用加载完成 #######");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
