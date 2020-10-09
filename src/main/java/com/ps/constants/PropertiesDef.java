@@ -12,8 +12,8 @@ public class PropertiesDef {
     public static final String InstallStatus = "  已安装  ";
     public static final String InstallButtonName = "安装";
     public static final String ReloadApplicationButtonName = "重新加载应用";
-    public static final String IpLable = "　　　　　　　　　　　　　　　　　　　IP列表:";
-
+    public static final String IpLable    = "　　　　　　　　　　　　　　　　　　　IP列表:";
+    public static final String NOT_EXIT_IP = "　　　　　　　　　　　　　　　　　 不存在IP: ";
     /**
      * 运行区域
      */
@@ -59,4 +59,5 @@ public class PropertiesDef {
     public static final String DockerInitCmd = "init";
     public static final String DockerReInstallCmd = "reInstall";
     public static final String DockerDeleteInstallCmd = "delete";
+    public static final String DockerReloadCmd = "reload ";
 }

@@ -12,9 +12,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OperatorJPanel {
 
@@ -29,8 +30,8 @@ public class OperatorJPanel {
     private JLabel ipLable;     //IP列表
     private JComboBox<String> selectIp;   //IP下拉框
 
-    private String nginxIP;
-    private String applicationIp;
+    private volatile String nginxIP;
+    private volatile String applicationIp;
 
     //运行工具栏
     private JPanel runJPanel;
@@ -42,6 +43,8 @@ public class OperatorJPanel {
     private volatile boolean dockerIsRun;                 //服务是否正常启动
     private volatile boolean imageIsRun;                 //服务是否正常启动
     private volatile boolean imageIsLoad;                //镜像是否加载
+    private JLabel waringLable;     //警告标签
+
 
     public OperatorJPanel(boolean isInstall, boolean dockerIsRun, boolean imageIsRun, boolean imageIsLoad, MainFrame mainFrame) {
         this.dockerIsRun = dockerIsRun;
@@ -59,21 +62,48 @@ public class OperatorJPanel {
         this.installLable = new JLabel();    //安装标题
         this.installLable.setText(PropertiesDef.InstallLabelName); //标题
 
-        this.reloadJbutton = new JButton(PropertiesDef.ReloadApplicationButtonName);        //重新加载应用
-        this.reloadJbutton.addActionListener(monitor);
-        this.ipLable = new JLabel();
-        this.ipLable.setText(PropertiesDef.IpLable);    //ip标签
         this.selectIp = new JComboBox();                 //IP选择框
         //读取本机IP
         java.util.List<String> localIPs = IpUtils.getLocalIp();
+        Map<String,String> localIPNetWorkMap = new HashMap<String,String>();
         if (localIPs != null && localIPs.size() > 0)  {
-            this.selectIp.addItem("111111");
-            this.selectIp.addItem("222222");
-            this.selectIp.addItem("333333");
- /*           localIPs.forEach(o -> {
+            localIPs.forEach(o -> {
                 this.selectIp.addItem(o);
-            });*/
+                localIPNetWorkMap.put(o,o);
+            });
         }
+        this.reloadJbutton = new JButton(PropertiesDef.ReloadApplicationButtonName);        //重新加载应用
+        this.reloadJbutton.addActionListener(monitor);
+        boolean reload = false;
+        //查看应用镜像IP地址是否不存在
+        String applicationImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.ApplicationContainerName), false);
+        //应用IP
+        if (applicationImageHostIp != null && applicationImageHostIp != "") {
+            applicationIp = applicationImageHostIp;
+            //reload应用
+            if (!localIPNetWorkMap.containsKey(applicationIp)) {
+                reloadJbutton.setEnabled(true);
+                reload = true;
+            }
+        }
+
+        //查看应用镜像IP地址是否不存在
+        String nginxImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.NginxContainerName), false);
+        //nginxIp
+        if (nginxImageHostIp != null && nginxImageHostIp != "") {
+            nginxIP = nginxImageHostIp;
+            //reload应用
+            if (!localIPNetWorkMap.containsKey(nginxIP)) {
+                reloadJbutton.setEnabled(true);
+                reload = true;
+            }
+        }
+        if (!reload) { //是否允许点击新新加载铵钮
+            reloadJbutton.setEnabled(false);
+        }
+
+        this.ipLable = new JLabel();
+        this.ipLable.setText(PropertiesDef.IpLable);    //ip标签
 
         //判断是否已经安装，如果为true，则禁止重新安装
         //安装按钮
@@ -110,6 +140,7 @@ public class OperatorJPanel {
         this.stopJbutton.addActionListener(monitor);
         this.restartJbutton = new JButton(PropertiesDef.RestartButtonName);  //重启
         this.restartJbutton.addActionListener(monitor);
+        this.waringLable = new JLabel();
 
         if (this.dockerIsRun && this.imageIsRun) { //运行状态
             this.runStatus.setText(PropertiesDef.RunStatus); //运行中
@@ -140,7 +171,8 @@ public class OperatorJPanel {
         this.runJPanel.add(this.runStatus);
         this.runJPanel.add(runJbutton);
         this.runJPanel.add(stopJbutton);
-        this.runJPanel.add(restartJbutton);
+        this.runJPanel.add(restartJbutton);//重启按钮
+        this.runJPanel.add(waringLable);  //警告标签
 
         //容器显示内容
         Container container = this.mainFrame.getContentPane();
@@ -433,14 +465,48 @@ public class OperatorJPanel {
 
                 }//end if
             } else if ( event.getActionCommand() == PropertiesDef.ReloadApplicationButtonName ){ //重新加载应用
-               // reloadJbutton.setEnabled(false);
-                System.out.println(selectIp.getSelectedItem());
+                reloadJbutton.setEnabled(false);
+                int result = new TimeDialog().showDialog(mainFrame, "确认新加载应用！", 10);
+                if (result == PropertiesDef.TimeDialogNo) {
+                    reloadJbutton.setEnabled(true);
+                    return;
+                }
+                try {
+                    LogQueue.Push("\r\n");
+                    LogQueue.Push("####### 正在重新加载应用 #######");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                String ip = OperatorJPanel.this.selectIp.getSelectedItem().toString();
+
+                //查看应用镜像IP地址是否不存在
+                String applicationImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.ApplicationContainerName), false);
+                //应用IP
+                if (applicationImageHostIp != null && !ip.equals(applicationImageHostIp)) {
+                    //应用重新加载
+                    ServerUtils.dockerServiceOperator(PropertiesDef.DockerReloadCmd + " terminal-web-tenant " + ip, true);
+                }
+
+                //查看应用镜像IP地址是否不存在
+                String nginxImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.NginxContainerName), false);
+                //nginxIp
+                if (nginxImageHostIp != null && !ip.equals(nginxImageHostIp)) {
+                    //重新加载nginx应用
+                    ServerUtils.dockerServiceOperator(PropertiesDef.DockerReloadCmd + " nginx " + ip, true);
+                }
+                try {
+                    LogQueue.Push("\r\n");
+                    LogQueue.Push("####### 应用加载完居 #######");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
             }
         }//end else if (event.getActionCommand() == PropertiesDef.RestartButtonName) { //重启服务
 
     }
 
+    //检查运行状态线程
     class CheckInstallRunStatus implements Runnable {
         private OperatorJPanel operatorJPanel;
         private boolean isLog;
@@ -452,6 +518,7 @@ public class OperatorJPanel {
 
         @Override
         public void run() {
+            boolean isReload = false;
             while (true) {
                 //检查docker服务安装是否安装
                 boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, this.isLog);
@@ -464,46 +531,54 @@ public class OperatorJPanel {
 
                 try {
                     if (ips != null && ips.size() > 0) {
-
-                        HashMap<String,String> ipMap = new HashMap<>(); //本机当前所有IP地址
-                        HashMap<String,String> selectIpMap = new HashMap<>();//下拉框当前已经存存在的地址
-
-                        //把select下拉菜单中的数据，放入map集合中
-                        for (int i=0; i < selectIp.getItemCount(); i++) {
-                            String item =  selectIp.getItemAt(i);
-                            selectIpMap.put(item, item);
-                        }
-                        //循环本机IP列表，把select中不存在的本的IP地址，放入select
+                        Map<String,String> localIPNetWorkMap = new HashMap<String,String>();
+                        Map<String,String> selectIpMap = new HashMap<String,String>();
+                        //把本机网卡IP放到map
                         ips.forEach(o->{
                             //如果本机select下拉菜单不存在数据，则放
-                            if (!selectIpMap.containsKey(o)){
-                                selectIp.addItem(o);
-                                System.out.println("adddddddd"+o);
-                            }
-                            ipMap.put(o, o);
+                            localIPNetWorkMap.put(o,o);
                         });
 
-                        //遍历select菜单，删除本机不存在的IP item
-                        for (int i=0; i < selectIp.getItemCount();) {
+                        //判断本机IP和select下拉框IP是否有变化，假如有变化，则进行重新删除所有select的IP下拉框，进行重新加载
+                        AtomicBoolean isReloadSelect = new AtomicBoolean(false);
+                        for (int i=0; i < selectIp.getItemCount();i++) {
                             String item =  selectIp.getItemAt(i);
-                            System.out.println("remote====================="+item);
                             //保存需要删除的select列表
-                            if (!ipMap.containsKey(item)) {
-                                System.out.println("remove         "+item);
-                               // selectIp.removeItemAt(i);
-                                //continue;
+                            if (!localIPNetWorkMap.containsKey(item)) {
+                                isReloadSelect.set(true);
+                                break;
                             }
-                            i++;
+                            selectIpMap.put(item, item);
+                        }
+                        //判断本机网卡IP是否跟select下拉菜单有差异
+                        if (!isReloadSelect.get()) {
+                            ips.forEach(o->{
+                                if (!selectIpMap.containsKey(o)) {
+                                    isReloadSelect.set(true);
+                                    return;
+                                }
+                            });
                         }
 
+                        if (isReloadSelect.get()) {
+                            selectIp.removeAllItems();
+                            selectIp.removeAll();
+                            ips.forEach(o->{
+                                selectIp.addItem(o);
+                            });
+                        }
+
+                        boolean reload = false;
                         //查看应用镜像IP地址是否不存在
                         String applicationImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.ApplicationContainerName), false);
                         //应用IP
                         if (applicationImageHostIp != null && applicationImageHostIp != "") {
                             applicationIp = applicationImageHostIp;
                             //reload应用
-                            if (!ipMap.containsKey(applicationIp)) {
-
+                            if (!localIPNetWorkMap.containsKey(applicationIp)) {
+                                reloadJbutton.setEnabled(true);
+                                reload = true;
+                                waringLable.setText(PropertiesDef.NOT_EXIT_IP + applicationIp);
                             }
                         }
 
@@ -513,9 +588,15 @@ public class OperatorJPanel {
                         if (nginxImageHostIp != null && nginxImageHostIp != "") {
                             nginxIP = nginxImageHostIp;
                             //reload应用
-                            if (!ipMap.containsKey(applicationIp)) {
-
+                            if (!localIPNetWorkMap.containsKey(nginxIP)) {
+                                reloadJbutton.setEnabled(true);
+                                reload = true;
+                                waringLable.setText(PropertiesDef.NOT_EXIT_IP + nginxIP);
                             }
+                        }
+                        if (!reload) { //允许点击
+                            reloadJbutton.setEnabled(false);
+                            waringLable.setText("");
                         }
                     } //
 
