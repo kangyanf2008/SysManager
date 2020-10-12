@@ -68,7 +68,7 @@ public class OperatorJPanel {
         Map<String,String> localIPNetWorkMap = new HashMap<String,String>();
         if (localIPs != null && localIPs.size() > 0)  {
             localIPs.forEach(o -> {
-                this.selectIp.addItem(o);
+                //this.selectIp.addItem(o);
                 localIPNetWorkMap.put(o,o);
             });
         }
@@ -100,6 +100,22 @@ public class OperatorJPanel {
         }
         if (!reload) { //是否允许点击新新加载铵钮
             reloadJbutton.setEnabled(false);
+        }
+
+        //添加下拉菜单。如果无需要加载，则默认第一个为应用使用IP
+        if(!reload) { //如果不需要重新加载，证IP无变化，或者应用当前没有安装。则第一个IP，显示当前安装程序IP
+            if (applicationImageHostIp != null && !"".equals(applicationImageHostIp)) {
+                    this.selectIp.addItem(applicationImageHostIp);
+            }
+        }
+        //把IP列表放入下拉菜单
+        for(int i=0; i<localIPs.size(); i++) {
+            if(!reload) { //如果不需要重新加载，证IP无变化，或者应用当前没有安装。则第一个IP，显示当前安装程序IP
+                if (applicationImageHostIp != null && !"".equals(applicationImageHostIp) && applicationImageHostIp.equals(localIPs.get(i))) {
+                    continue;
+                }
+            }
+            this.selectIp.addItem(localIPs.get(i));
         }
 
         this.ipLable = new JLabel();
@@ -560,14 +576,6 @@ public class OperatorJPanel {
                             });
                         }
 
-                        if (isReloadSelect.get()) {
-                            selectIp.removeAllItems();
-                            selectIp.removeAll();
-                            ips.forEach(o->{
-                                selectIp.addItem(o);
-                            });
-                        }
-
                         boolean reload = false;
                         //查看应用镜像IP地址是否不存在
                         String applicationImageHostIp = ServerUtils.hostIp(LoadConfig.getConfig(PropertiesDef.ApplicationContainerName), false);
@@ -594,6 +602,27 @@ public class OperatorJPanel {
                                 waringLable.setText(PropertiesDef.NOT_EXIT_IP + nginxIP);
                             }
                         }
+
+                        if (isReloadSelect.get()) {
+                            selectIp.removeAllItems();
+                            selectIp.removeAll();
+                            //添加下拉菜单。如果无需要加载，则默认第一个为应用使用IP
+                            if(!reload) { //如果不需要重新加载，证IP无变化，或者应用当前没有安装。则第一个IP，显示当前安装程序IP
+                                if (applicationImageHostIp != null && !"".equals(applicationImageHostIp)) {
+                                    selectIp.addItem(applicationImageHostIp);
+                                }
+                            }
+                            //把IP列表放入下拉菜单
+                            for(int i=0; i<ips.size(); i++) {
+                                if(!reload) { //如果不需要重新加载，证IP无变化，或者应用当前没有安装。则第一个IP，显示当前安装程序IP
+                                    if (applicationImageHostIp != null && !"".equals(applicationImageHostIp) && applicationImageHostIp.equals(ips.get(i))) {
+                                        continue;
+                                    }
+                                }
+                                selectIp.addItem(ips.get(i));
+                            }
+                        }
+
                         if (!reload) { //允许点击
                             reloadJbutton.setEnabled(false);
                             waringLable.setText("");
