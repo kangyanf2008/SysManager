@@ -1,5 +1,6 @@
 package com.ps.frame;
 
+import com.ps.config.LoadConfig;
 import com.ps.constants.PropertiesDef;
 import com.ps.panel.OperatorJPanel;
 import com.ps.panel.ViewOperatorLogJPanel;
@@ -8,6 +9,8 @@ import com.ps.utils.ServerUtils;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class MainFrame  extends JFrame {
 
@@ -25,10 +28,16 @@ public class MainFrame  extends JFrame {
     private void createFrame() {
         this.setTitle(PropertiesDef.MainFrameTitle);
         this.setName(PropertiesDef.MainFrameName);
-        String url = MainFrame.class.getResource("/").getPath();
-        url += (File.separator+"resources"+File.separator+"icon.png");
-        Image image = Toolkit.getDefaultToolkit().getImage(url);
-        this.setIconImage(image);
+        //设置图标
+        try {
+            InputStream is = MainFrame.class.getResourceAsStream("/resources/icon.png");
+            byte[] buffer = new byte[1024*1024*2];
+            int len = is.read(buffer);
+            Image image = Toolkit.getDefaultToolkit().createImage(buffer, 0, len);
+            this.setIconImage(image);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         //检查docker服务安装是否安装
         boolean isInstall = ServerUtils.checkServerInstall(PropertiesDef.DockerServiceName, false);
